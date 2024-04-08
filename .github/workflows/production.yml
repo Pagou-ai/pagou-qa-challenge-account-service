@@ -1,0 +1,64 @@
+name: Deploy on Production
+run-name: Deploy AdonisJs on Production
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+    Deployment:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
+
+            - name: Security Scan
+              uses: trufflesecurity/trufflehog@main
+              with:
+                extra_args: '--only-verified'
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: '20.11.0'
+
+            - name: Install Dependencies
+              run: npm install
+              env:
+                CI: false
+
+            - name: Build for Production
+              run: npm run build
+
+            - name: Deploy to Production
+              uses: easingthemes/ssh-deploy@main
+              with:
+                ARGS: "-rlgoDzvc -i --delete"
+                SOURCE: "build/"
+                TARGET: "/app/production"
+                REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+                REMOTE_USER: ${{ secrets.REMOTE_USER }}
+                SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+                SCRIPT_BEFORE: |
+                    sudo mkdir -p /app/production
+                    cd /app/production
+                    npm install pm2 -g || true
+                    pm2 stop all || true
+                    pm2 delete all || true
+                    rm -rf node_modules || true
+                
+                SCRIPT_AFTER: |
+                    cd /app/production
+                    npm ci
+
+                    touch .env
+                    echo "${{ secrets.ENV_FILE  }}" >> .env
+
+                    pm2 start server.js --name "AccountService" --watch --ignore-watch="node_modules" --ignore-watch="logs" --ignore-watch=".env" --ignore-watch="pm2.json"
+                    pm2 save
+                    pm2 startup
+                    echo $RSYNC_STDOUT

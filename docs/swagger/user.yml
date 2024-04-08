@@ -1,0 +1,63 @@
+/user:
+  post:
+    tags:
+      - User
+    security: []
+    description: Create user
+    requestBody:
+        description: Dados do usuário a ser criado
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Nome completo
+                email:
+                  type: string
+                  description: E-mail
+                password:
+                  type: string
+                  description: Senha
+                phone:
+                  type: string
+                  description: Telefone
+                avatar:
+                  type: string
+                  description: Avatar url
+                terms_accepted: 
+                  type: boolean
+                  description: Aceite dos termos
+                birthdate:
+                  type: string
+                  description: Data de nascimento
+                  format: date
+                  example: 1990-01-01
+                document_type: 
+                  type: string
+                  description: Tipo de documento
+                  enum: [cpf, cnpj]
+                document_number:
+                  type: string
+                  description: Número do documento
+                utm_source:
+                  type: string
+                  description: Origem da campanha
+                mother_name:
+                  type: string
+                  description: Nome da mãe
+
+              required:
+                - name
+                - email
+                - password
+                - phone
+                - birthdate
+                - document_number
+    produces:
+      - application/json
+    responses:
+      200:
+        description: Success
